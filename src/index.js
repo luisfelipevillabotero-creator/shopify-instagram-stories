@@ -16,6 +16,13 @@ async function main() {
   try {
     const config = loadConfig();
 
+    // Verificar cuenta de Instagram
+    const igResponse = await fetch(
+      `https://graph.facebook.com/v19.0/${config.instagramUserId}?fields=username,name&access_token=${config.instagramAccessToken}`
+    );
+    const igData = await igResponse.json();
+    logger.info(`Cuenta de Instagram: @${igData.username} (${igData.name || 'sin nombre'})`);
+
     // Paso 1: Obtener productos mas vendidos de Shopify
     logger.info('Obteniendo productos mas vendidos de Shopify...');
     const products = await fetchBestSellingProducts(config, { first: 10 });
