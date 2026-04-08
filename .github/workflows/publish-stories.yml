@@ -1,0 +1,62 @@
+name: Publicar Instagram Stories
+
+on:
+  schedule:
+    # 10:00 AM hora Colombia (UTC-5) = 15:00 UTC
+    - cron: '0 15 * * *'
+    # 6:00 PM hora Colombia (UTC-5) = 23:00 UTC
+    - cron: '0 23 * * *'
+  workflow_dispatch: # Permite ejecucion manual para pruebas
+
+permissions:
+  contents: write
+
+jobs:
+  publish-story:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repositorio
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependencias de sistema para canvas
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libcairo2-dev \
+            libjpeg-dev \
+            libpango1.0-dev \
+            libgif-dev \
+            librsvg2-dev
+
+      - name: Instalar dependencias npm
+        run: npm ci
+
+      - name: Ejecutar publicador de stories
+        env:
+          SHOPIFY_STORE_DOMAIN: ${{ secrets.SHOPIFY_STORE_DOMAIN }}
+          SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+          SHOPIFY_STORE_URL: ${{ secrets.SHOPIFY_STORE_URL }}
+          SHOPIFY_COLLECTION_HANDLE: ${{ secrets.SHOPIFY_COLLECTION_HANDLE }}
+          SHOPIFY_API_VERSION: '2026-01'
+          INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
+        run: node src/index.js
+
+      - name: Commit historial actualizado
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/posted-history.json
+          git diff --staged --quiet || git commit -m "Actualizar historial de publicaciones [skip ci]"
+          git push

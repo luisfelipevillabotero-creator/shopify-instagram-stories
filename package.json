@@ -1,0 +1,17 @@
+{
+  "name": "shopify-instagram-stories",
+  "version": "1.0.0",
+  "description": "Publica automaticamente Instagram Stories con productos de Shopify",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "canvas": "^2.11.2",
+    "imgbb-uploader": "^1.5.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

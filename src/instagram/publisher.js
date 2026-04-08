@@ -1,0 +1,112 @@
+import { logger } from '../utils/logger.js';
+
+const GRAPH_API_BASE = 'https://graph.facebook.com/v25.0';
+
+export async function publishStory(imageUrl, productUrl, config) {
+  // Paso 1: Crear media container
+  logger.info('Creando container de media en Instagram...');
+  const containerId = await createStoryContainer(imageUrl, productUrl, config);
+  logger.info(`Container creado: ${containerId}`);
+
+  // Paso 2: Esperar procesamiento
+  logger.info('Esperando que el container este listo...');
+  await waitForContainerReady(containerId, config);
+
+  // Paso 3: Publicar
+  logger.info('Publicando story...');
+  const mediaId = await publishContainer(containerId, config);
+  logger.info(`Story publicada! Media ID: ${mediaId}`);
+
+  return { id: mediaId };
+}
+
+async function createStoryContainer(imageUrl, productUrl, config) {
+  const url = `${GRAPH_API_BASE}/${config.instagramUserId}/media`;
+
+  const params = new URLSearchParams({
+    image_url: imageUrl,
+    media_type: 'STORIES',
+    access_token: config.instagramAccessToken,
+  });
+
+  // Agregar enlace de compra al producto
+  if (productUrl) {
+    params.set('link', productUrl);
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    body: params,
+  });
+
+  const data = await response.json();
+
+  if (data.error) {
+    throw new Error(
+      `Error creando container de Instagram: ${JSON.stringify(data.error)}`
+    );
+  }
+
+  return data.id;
+}
+
+async function waitForContainerReady(containerId, config, maxAttempts = 30) {
+  const url = `${GRAPH_API_BASE}/${containerId}`;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const response = await fetch(
+      `${url}?fields=status_code&access_token=${config.instagramAccessToken}`
+    );
+    const data = await response.json();
+    const status = data.status_code;
+
+    logger.info(`Status del container (intento ${attempt + 1}): ${status}`);
+
+    if (status === 'FINISHED') {
+      return;
+    }
+
+    if (status === 'ERROR') {
+      throw new Error(
+        'El container de Instagram fallo con status ERROR'
+      );
+    }
+
+    if (status === 'EXPIRED') {
+      throw new Error(
+        'El container de Instagram expiro antes de publicarse'
+      );
+    }
+
+    // Esperar 2 segundos antes del siguiente intento
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+
+  throw new Error(
+    `Container no listo despues de ${maxAttempts} intentos`
+  );
+}
+
+async function publishContainer(containerId, config) {
+  const url = `${GRAPH_API_BASE}/${config.instagramUserId}/media_publish`;
+
+  const params = new URLSearchParams({
+    creation_id: containerId,
+    access_token: config.instagramAccessToken,
+  });
+
+  const response = await fetch(url, {
+    method: 'POST',
+    body: params,
+  });
+
+  const data = await response.json();
+
+  if (data.error) {
+    throw new Error(
+      `Error publicando en Instagram: ${JSON.stringify(data.error)}`
+    );
+  }
+
+  return data.id;
+}
