@@ -2,7 +2,12 @@ export async function fetchBestSellingProducts(config, { first = 10 } = {}) {
   const collectionHandle = config.shopifyCollectionHandle;
   const url = `https://${config.shopifyStoreDomain}/collections/${collectionHandle}/products.json?limit=${first}&sort_by=best-selling`;
 
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (compatible; StoryBot/1.0)',
+      'Accept': 'application/json',
+    },
+  });
 
   if (!response.ok) {
     throw new Error(
