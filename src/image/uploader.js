@@ -11,5 +11,6 @@ export async function uploadImageForInstagram(localImagePath, config) {
     expiration: 3600, // 1 hora — suficiente para que Instagram la descargue
   });
 
-  return response.url;
+  // Usar la URL directa de la imagen (no la pagina de imgBB)
+  return response.display_url || response.image?.url || response.url;
 }
