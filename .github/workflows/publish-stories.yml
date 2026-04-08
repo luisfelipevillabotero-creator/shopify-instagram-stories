@@ -48,7 +48,7 @@ jobs:
           SHOPIFY_COLLECTION_HANDLE: ${{ secrets.SHOPIFY_COLLECTION_HANDLE }}
           INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
           INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
-          IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node src/index.js
 
       - name: Commit historial actualizado

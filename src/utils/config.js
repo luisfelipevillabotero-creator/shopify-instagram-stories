@@ -5,7 +5,6 @@ export function loadConfig() {
     shopifyStoreUrl: process.env.SHOPIFY_STORE_URL,
     instagramUserId: process.env.INSTAGRAM_USER_ID,
     instagramAccessToken: process.env.INSTAGRAM_ACCESS_TOKEN,
-    imgbbApiKey: process.env.IMGBB_API_KEY,
   };
 
   const required = [
@@ -13,7 +12,6 @@ export function loadConfig() {
     'shopifyStoreUrl',
     'instagramUserId',
     'instagramAccessToken',
-    'imgbbApiKey',
   ];
 
   const missing = required.filter((key) => !config[key]);

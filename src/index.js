@@ -4,7 +4,10 @@ import {
   recordPostedProduct,
 } from './history/tracker.js';
 import { generateStoryImage } from './image/generator.js';
-import { uploadImageForInstagram } from './image/uploader.js';
+import {
+  uploadImageForInstagram,
+  cleanupUploadedImage,
+} from './image/uploader.js';
 import { publishStory } from './instagram/publisher.js';
 import { logger } from './utils/logger.js';
 import { loadConfig } from './utils/config.js';
@@ -37,13 +40,16 @@ async function main() {
     const localImagePath = await generateStoryImage(product);
     logger.info(`Imagen generada: ${localImagePath}`);
 
-    // Paso 5: Subir imagen para obtener URL publica
-    const publicUrl = await uploadImageForInstagram(localImagePath, config);
+    // Paso 5: Subir imagen para obtener URL publica (via GitHub)
+    const publicUrl = await uploadImageForInstagram(localImagePath);
     logger.info(`Imagen subida a: ${publicUrl}`);
 
     // Paso 6: Publicar story en Instagram con enlace de compra
     const result = await publishStory(publicUrl, product.url, config);
     logger.info(`Story publicada! Media ID: ${result.id}`);
+
+    // Paso 6.5: Limpiar imagen temporal del repositorio
+    await cleanupUploadedImage(publicUrl);
 
     // Paso 7: Registrar en historial
     recordPostedProduct(product);

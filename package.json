@@ -8,8 +8,7 @@
     "start": "node src/index.js"
   },
   "dependencies": {
-    "canvas": "^2.11.2",
-    "imgbb-uploader": "^1.5.1"
+    "canvas": "^2.11.2"
   },
   "engines": {
     "node": ">=20.0.0"
