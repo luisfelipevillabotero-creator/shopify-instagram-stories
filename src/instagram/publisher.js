@@ -1,8 +1,13 @@
 import { logger } from '../utils/logger.js';
 
-const GRAPH_API_BASE = 'https://graph.facebook.com/v25.0';
+const GRAPH_API_BASE = 'https://graph.facebook.com/v19.0';
 
 export async function publishStory(imageUrl, productUrl, config) {
+  // Verificar que la URL de imagen es accesible
+  logger.info(`Verificando accesibilidad de imagen: ${imageUrl}`);
+  const checkResponse = await fetch(imageUrl, { method: 'HEAD' });
+  logger.info(`Imagen check: status=${checkResponse.status}, content-type=${checkResponse.headers.get('content-type')}, size=${checkResponse.headers.get('content-length')}`);
+
   // Paso 1: Crear media container
   logger.info('Creando container de media en Instagram...');
   const containerId = await createStoryContainer(imageUrl, productUrl, config);
@@ -21,10 +26,11 @@ export async function publishStory(imageUrl, productUrl, config) {
 }
 
 async function createStoryContainer(imageUrl, productUrl, config) {
-  const url = `${GRAPH_API_BASE}/${config.instagramUserId}/media`;
+  const cleanImageUrl = imageUrl.trim();
+  logger.info(`URL de imagen para Instagram: ${cleanImageUrl}`);
 
   const params = new URLSearchParams({
-    image_url: imageUrl,
+    image_url: cleanImageUrl,
     media_type: 'STORIES',
     access_token: config.instagramAccessToken,
   });
@@ -34,9 +40,10 @@ async function createStoryContainer(imageUrl, productUrl, config) {
     params.set('link', productUrl);
   }
 
+  const url = `${GRAPH_API_BASE}/${config.instagramUserId}/media?${params.toString()}`;
+
   const response = await fetch(url, {
     method: 'POST',
-    body: params,
   });
 
   const data = await response.json();
