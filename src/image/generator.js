@@ -29,11 +29,11 @@ export async function generateStoryImage(product) {
   ctx.fillStyle = template.backgroundColor;
   ctx.fillRect(0, 0, STORY_WIDTH, STORY_HEIGHT);
 
-  // Capa 2: Imagen del producto
+  // Capa 2: Imagen del producto (80% superior)
   if (product.imageUrl) {
     try {
       const productImg = await loadImage(product.imageUrl);
-      const targetHeight = STORY_HEIGHT * 0.6;
+      const targetHeight = STORY_HEIGHT * 0.8;
       const targetWidth = STORY_WIDTH;
       const imgAspect = productImg.width / productImg.height;
       const targetAspect = targetWidth / targetHeight;
@@ -66,14 +66,14 @@ export async function generateStoryImage(product) {
       // Gradiente para fundir imagen con fondo
       const gradient = ctx.createLinearGradient(
         0,
-        targetHeight * 0.5,
+        targetHeight * 0.65,
         0,
         targetHeight
       );
       gradient.addColorStop(0, hexToRgba(template.backgroundColor, 0));
       gradient.addColorStop(1, hexToRgba(template.backgroundColor, 1));
       ctx.fillStyle = gradient;
-      ctx.fillRect(0, targetHeight * 0.5, STORY_WIDTH, targetHeight * 0.5);
+      ctx.fillRect(0, targetHeight * 0.65, STORY_WIDTH, targetHeight * 0.35);
     } catch {
       // Si falla la carga de imagen, continuar con el fondo solido
     }
@@ -98,10 +98,10 @@ export async function generateStoryImage(product) {
     }
   }
 
-  // Capa 4: Titulo del producto
-  const textStartY = STORY_HEIGHT * 0.65;
+  // Capa 4: Titulo del producto (zona inferior 20%)
+  const textStartY = STORY_HEIGHT * 0.82;
   ctx.fillStyle = template.textColor;
-  ctx.font = 'bold 56px Montserrat';
+  ctx.font = 'bold 44px Montserrat';
   ctx.textAlign = 'center';
   wrapText(
     ctx,
@@ -109,16 +109,16 @@ export async function generateStoryImage(product) {
     STORY_WIDTH / 2,
     textStartY,
     STORY_WIDTH - 120,
-    68
+    52
   );
 
   // Capa 5: Precio
-  const priceY = textStartY + 160;
+  const priceY = textStartY + 100;
 
   if (product.discount) {
     // Precio original tachado
     ctx.fillStyle = '#888888';
-    ctx.font = 'normal 40px Montserrat';
+    ctx.font = 'normal 32px Montserrat';
     const originalPriceText = formatPrice(
       product.compareAtPrice,
       product.currency
@@ -130,13 +130,13 @@ export async function generateStoryImage(product) {
     ctx.strokeStyle = '#888888';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(STORY_WIDTH / 2 - 80 - originalWidth / 2, priceY - 8);
-    ctx.lineTo(STORY_WIDTH / 2 - 80 + originalWidth / 2, priceY - 8);
+    ctx.moveTo(STORY_WIDTH / 2 - 80 - originalWidth / 2, priceY - 6);
+    ctx.lineTo(STORY_WIDTH / 2 - 80 + originalWidth / 2, priceY - 6);
     ctx.stroke();
 
     // Precio con descuento
     ctx.fillStyle = template.priceColor;
-    ctx.font = 'bold 64px Montserrat';
+    ctx.font = 'bold 50px Montserrat';
     ctx.fillText(
       formatPrice(product.price, product.currency),
       STORY_WIDTH / 2 + 80,
@@ -144,10 +144,10 @@ export async function generateStoryImage(product) {
     );
 
     // Badge de descuento
-    drawDiscountBadge(ctx, product.discount, STORY_WIDTH - 120, textStartY - 40);
+    drawDiscountBadge(ctx, product.discount, STORY_WIDTH - 120, textStartY - 30);
   } else {
     ctx.fillStyle = template.textColor;
-    ctx.font = 'bold 64px Montserrat';
+    ctx.font = 'bold 50px Montserrat';
     ctx.fillText(
       formatPrice(product.price, product.currency),
       STORY_WIDTH / 2,
@@ -156,19 +156,19 @@ export async function generateStoryImage(product) {
   }
 
   // Capa 6: Boton CTA
-  const ctaY = STORY_HEIGHT - 200;
-  drawRoundedRect(ctx, STORY_WIDTH / 2 - 200, ctaY, 400, 80, 40);
+  const ctaY = STORY_HEIGHT - 145;
+  drawRoundedRect(ctx, STORY_WIDTH / 2 - 180, ctaY, 360, 65, 32);
   ctx.fillStyle = template.ctaColor;
   ctx.fill();
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 32px Montserrat';
+  ctx.font = 'bold 28px Montserrat';
   ctx.textAlign = 'center';
-  ctx.fillText('COMPRAR AHORA', STORY_WIDTH / 2, ctaY + 52);
+  ctx.fillText('COMPRAR AHORA', STORY_WIDTH / 2, ctaY + 43);
 
-  // Capa 7: Texto de swipe up
-  ctx.fillStyle = hexToRgba(template.textColor, 0.6);
-  ctx.font = 'normal 24px Montserrat';
-  ctx.fillText('Desliza hacia arriba', STORY_WIDTH / 2, STORY_HEIGHT - 80);
+  // Capa 7: Texto inferior
+  ctx.fillStyle = hexToRgba(template.textColor, 0.5);
+  ctx.font = 'normal 22px Montserrat';
+  ctx.fillText('weloveluana.com', STORY_WIDTH / 2, STORY_HEIGHT - 50);
 
   // Guardar imagen
   if (!fs.existsSync(OUTPUT_DIR)) {
