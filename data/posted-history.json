@@ -1,24 +1,3 @@
 {
-  "postedProducts": [
-    {
-      "id": "8924149252355",
-      "title": "Anillo Agadez",
-      "postedAt": "2026-04-08T18:44:45.563Z"
-    },
-    {
-      "id": "8924116910339",
-      "title": "Anillo Aksum",
-      "postedAt": "2026-04-08T23:31:28.883Z"
-    },
-    {
-      "id": "8711328530691",
-      "title": "Anillo Alessia",
-      "postedAt": "2026-04-09T05:53:02.961Z"
-    },
-    {
-      "id": "8924154790147",
-      "title": "Anillo Almati",
-      "postedAt": "2026-04-09T05:59:17.068Z"
-    }
-  ]
+  "postedProducts": []
 }

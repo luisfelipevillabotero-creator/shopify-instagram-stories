@@ -36,7 +36,7 @@ export async function fetchBestSellingProducts(config, { first = 10 } = {}) {
       title: product.title,
       handle: product.handle,
       description: product.body_html?.replace(/<[^>]*>/g, '') || '',
-      url: `${config.shopifyStoreUrl}/products/${product.handle}`,
+      url: `${config.shopifyStoreUrl}/products/${product.handle}?utm_source=instagram&utm_medium=organico&utm_campaign=post&utm_content=story`,
       price,
       compareAtPrice,
       currency: 'COP',
