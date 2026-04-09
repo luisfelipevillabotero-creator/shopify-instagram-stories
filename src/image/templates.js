@@ -1,24 +1,38 @@
 export const TEMPLATES = {
-  dark: {
-    backgroundColor: '#1a1a2e',
-    textColor: '#FFFFFF',
-    accentColor: '#E94560',
-    priceColor: '#FF6B6B',
-    ctaColor: '#E94560',
+  amarillo: {
+    backgroundColor: '#fffebe',
+    textColor: '#4f2c1d',
+    accentColor: '#4c69b2',
+    priceColor: '#4c69b2',
+    ctaColor: '#4c69b2',
   },
-  light: {
-    backgroundColor: '#F5F5F5',
-    textColor: '#1a1a2e',
-    accentColor: '#0F3460',
-    priceColor: '#E94560',
-    ctaColor: '#0F3460',
+  azul: {
+    backgroundColor: '#c8d5ed',
+    textColor: '#4f2c1d',
+    accentColor: '#4c69b2',
+    priceColor: '#4f2c1d',
+    ctaColor: '#4c69b2',
   },
-  vibrant: {
-    backgroundColor: '#16213E',
+  beige: {
+    backgroundColor: '#dbc9be',
+    textColor: '#4f2c1d',
+    accentColor: '#4c69b2',
+    priceColor: '#4c69b2',
+    ctaColor: '#4f2c1d',
+  },
+  marron: {
+    backgroundColor: '#4f2c1d',
+    textColor: '#fffebe',
+    accentColor: '#dbc9be',
+    priceColor: '#fffebe',
+    ctaColor: '#4c69b2',
+  },
+  azulOscuro: {
+    backgroundColor: '#4c69b2',
     textColor: '#FFFFFF',
-    accentColor: '#E94560',
-    priceColor: '#FFC300',
-    ctaColor: '#E94560',
+    accentColor: '#fffebe',
+    priceColor: '#fffebe',
+    ctaColor: '#4f2c1d',
   },
 };
 
