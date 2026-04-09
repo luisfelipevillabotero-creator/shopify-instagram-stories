@@ -42,6 +42,8 @@ async function main() {
     // Paso 3: Seleccionar el mejor producto no publicado
     const product = unposted[0];
     logger.info(`Producto seleccionado: ${product.title}`);
+    logger.info(`URL de compra: ${product.url}`);
+    logger.info(`Productos disponibles: ${products.map(p => p.title).join(', ')}`);
 
     // Paso 4: Generar imagen de la story
     const localImagePath = await generateStoryImage(product);
