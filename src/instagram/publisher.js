@@ -57,6 +57,51 @@ async function createStoryContainer(imageUrl, productUrl, config) {
   return data.id;
 }
 
+export async function publishVideoStory(videoUrl, config) {
+  logger.info(`Verificando accesibilidad de video: ${videoUrl}`);
+  const checkResponse = await fetch(videoUrl, { method: 'HEAD' });
+  logger.info(
+    `Video check: status=${checkResponse.status}, content-type=${checkResponse.headers.get('content-type')}, size=${checkResponse.headers.get('content-length')}`
+  );
+
+  logger.info('Creando container de video story en Instagram...');
+  const containerId = await createVideoStoryContainer(videoUrl, config);
+  logger.info(`Container creado: ${containerId}`);
+
+  logger.info('Esperando que el video este procesado...');
+  await waitForContainerReady(containerId, config, 60);
+
+  logger.info('Publicando video story...');
+  const mediaId = await publishContainer(containerId, config);
+  logger.info(`Video story publicada! Media ID: ${mediaId}`);
+
+  return { id: mediaId };
+}
+
+async function createVideoStoryContainer(videoUrl, config) {
+  const cleanVideoUrl = videoUrl.trim();
+  logger.info(`URL de video para Instagram: ${cleanVideoUrl}`);
+
+  const params = new URLSearchParams({
+    video_url: cleanVideoUrl,
+    media_type: 'STORIES',
+    access_token: config.instagramAccessToken,
+  });
+
+  const url = `${GRAPH_API_BASE}/${config.instagramUserId}/media?${params.toString()}`;
+
+  const response = await fetch(url, { method: 'POST' });
+  const data = await response.json();
+
+  if (data.error) {
+    throw new Error(
+      `Error creando container de video de Instagram: ${JSON.stringify(data.error)}`
+    );
+  }
+
+  return data.id;
+}
+
 async function waitForContainerReady(containerId, config, maxAttempts = 30) {
   const url = `${GRAPH_API_BASE}/${containerId}`;
 

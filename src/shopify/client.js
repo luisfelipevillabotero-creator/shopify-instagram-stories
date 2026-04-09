@@ -29,7 +29,8 @@ export async function fetchBestSellingProducts(config, { first = 10 } = {}) {
     const compareAtPrice = variant?.compare_at_price
       ? parseFloat(variant.compare_at_price)
       : null;
-    const image = product.images?.[0];
+    const fallbackImage = product.images?.[0]?.src || null;
+    const colorImages = extractColorImages(product);
 
     return {
       id: String(product.id),
@@ -44,7 +45,50 @@ export async function fetchBestSellingProducts(config, { first = 10 } = {}) {
         compareAtPrice && compareAtPrice > price
           ? Math.round((1 - price / compareAtPrice) * 100)
           : null,
-      imageUrl: image?.src || null,
+      imageUrl: fallbackImage,
+      colorImages,
     };
   });
+}
+
+function extractColorImages(product) {
+  const options = product.options || [];
+  const colorOptionIndex = options.findIndex(
+    (opt) => opt.name?.toLowerCase() === 'color'
+  );
+
+  const allImages = (product.images || []).map((img) => img.src);
+
+  if (colorOptionIndex === -1) {
+    return allImages.length > 0 ? [{ color: null, imageUrls: allImages }] : [];
+  }
+
+  const colorOptionKey = `option${colorOptionIndex + 1}`;
+
+  const variantColorMap = {};
+  for (const variant of product.variants || []) {
+    const color = variant[colorOptionKey];
+    if (color) variantColorMap[variant.id] = color;
+  }
+
+  const colorGroups = {};
+  for (const image of product.images || []) {
+    const linkedColors = new Set();
+    for (const vid of image.variant_ids || []) {
+      const color = variantColorMap[vid];
+      if (color) linkedColors.add(color);
+    }
+    for (const color of linkedColors) {
+      if (!colorGroups[color]) colorGroups[color] = [];
+      colorGroups[color].push(image.src);
+    }
+  }
+
+  const groupEntries = Object.entries(colorGroups);
+
+  if (groupEntries.length === 0) {
+    return allImages.length > 0 ? [{ color: null, imageUrls: allImages }] : [];
+  }
+
+  return groupEntries.map(([color, imageUrls]) => ({ color, imageUrls }));
 }
