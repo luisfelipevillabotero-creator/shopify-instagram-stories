@@ -3,24 +3,13 @@ import {
   filterUnpostedProducts,
   recordPostedProduct,
   resetProductHistory,
-  recordPostedReel,
-  getReelsPostedToday,
 } from './history/tracker.js';
 import { generateStoryImage } from './image/generator.js';
 import {
   uploadImageForInstagram,
   cleanupUploadedImage,
 } from './image/uploader.js';
-import { publishStory, publishVideoStory } from './instagram/publisher.js';
-import {
-  loadReelsConfig,
-  loadReelsMap,
-  resolveMissingShortcodes,
-  getFreshMediaUrl,
-  pickMorningReels,
-  pickEveningReels,
-  pickExtraRandomReel,
-} from './instagram/reels.js';
+import { publishStory } from './instagram/publisher.js';
 import { logger } from './utils/logger.js';
 import { loadConfig } from './utils/config.js';
 
@@ -66,113 +55,48 @@ async function main() {
       `Cuenta de Instagram: @${igData.username} (${igData.name || 'sin nombre'})`
     );
 
-    const numProducts = slot === 'morning' ? 5 : 4;
-    const numReels = slot === 'morning' ? 4 : 3;
+    const overrideCount = parseInt(process.env.PUBLISH_COUNT || '0', 10);
+    const numProducts =
+      overrideCount > 0 ? overrideCount : slot === 'morning' ? 9 : 7;
     logger.info(
-      `Plan: ${numProducts} productos + ${numReels} reels = ${numProducts + numReels} items`
+      `Plan: ${numProducts} productos${overrideCount > 0 ? ' (override)' : ''}`
     );
 
-    // 1. Preparar reels: resolver mapping si hace falta
-    const reelsConfig = loadReelsConfig();
-    const allShortcodes = [reelsConfig.mandatory, ...reelsConfig.pool];
-    await resolveMissingShortcodes(config, allShortcodes);
-    const reelsMap = loadReelsMap();
-    logger.info(
-      `Reels resueltos en mapping: ${Object.keys(reelsMap).length}/${allShortcodes.length}`
-    );
-
-    // 2. Preparar productos
+    // Preparar productos
     const products = await prepareProducts(config, numProducts);
     logger.info(
       `Productos seleccionados: ${products.map((p) => p.title).join(', ')}`
     );
 
-    // 3. Preparar reels
-    const reelsToday = getReelsPostedToday();
-    const excludeShortcodes = reelsToday.map((r) => r.shortcode);
-    logger.info(
-      `Reels ya publicados hoy: ${excludeShortcodes.length > 0 ? excludeShortcodes.join(', ') : 'ninguno'}`
-    );
-
-    let reels;
-    if (slot === 'morning') {
-      reels = pickMorningReels(reelsConfig, reelsMap, excludeShortcodes);
-    } else {
-      reels = pickEveningReels(reelsConfig, reelsMap, excludeShortcodes);
-    }
-    logger.info(
-      `Reels seleccionados: ${reels.map((r) => r.shortcode + (r.mandatory ? '(OBLIGATORIO)' : '')).join(', ')}`
-    );
-
-    // 4. Construir batch mezclado aleatoriamente
-    const items = [
-      ...products.map((p) => ({ type: 'product', data: p })),
-      ...reels.map((r) => ({ type: 'reel', data: r })),
-    ];
-    const batch = shuffle(items);
-    logger.info(`Orden del batch: ${batch.map((i) => i.type).join(' -> ')}`);
-
-    // 5. Publicar en secuencia
+    // Publicar en secuencia
     let successCount = 0;
     let failCount = 0;
-    const excludeForReplacement = [...excludeShortcodes];
-    for (const reel of reels) excludeForReplacement.push(reel.shortcode);
 
-    for (let i = 0; i < batch.length; i++) {
-      const item = batch[i];
-      logger.info(
-        `--- Publicando item ${i + 1}/${batch.length} (${item.type}) ---`
-      );
+    for (let i = 0; i < products.length; i++) {
+      const product = products[i];
+      logger.info(`--- Publicando ${i + 1}/${products.length} ---`);
 
       try {
-        if (item.type === 'product') {
-          await publishProductItem(item.data, config);
-          recordPostedProduct(item.data);
-          successCount++;
-        } else {
-          await publishReelItem(item.data, config);
-          recordPostedReel(item.data);
-          excludeForReplacement.push(item.data.shortcode);
-          successCount++;
-        }
+        await publishProductItem(product, config);
+        recordPostedProduct(product);
+        successCount++;
       } catch (error) {
-        logger.error(`Error publicando item ${i + 1}: ${error.message}`);
+        logger.error(`Error publicando ${i + 1}: ${error.message}`);
         failCount++;
-
-        if (item.type === 'reel' && !item.data.mandatory) {
-          logger.info('Intentando reemplazar reel fallido con otro aleatorio...');
-          const replacement = pickExtraRandomReel(
-            reelsConfig,
-            reelsMap,
-            excludeForReplacement
-          );
-          if (replacement) {
-            try {
-              await publishReelItem(replacement, config);
-              recordPostedReel(replacement);
-              excludeForReplacement.push(replacement.shortcode);
-              successCount++;
-              failCount--;
-              logger.info(
-                `Reel reemplazado exitosamente con ${replacement.shortcode}`
-              );
-            } catch (replaceError) {
-              logger.error(
-                `El reemplazo tambien fallo: ${replaceError.message}`
-              );
-            }
-          }
-        }
       }
 
-      if (i < batch.length - 1) {
-        logger.info(`Esperando ${DELAY_BETWEEN_PUBLISHES_MS}ms antes del siguiente...`);
+      if (i < products.length - 1) {
+        logger.info(
+          `Esperando ${DELAY_BETWEEN_PUBLISHES_MS}ms antes del siguiente...`
+        );
         await sleep(DELAY_BETWEEN_PUBLISHES_MS);
       }
     }
 
     logger.info(`======================================`);
-    logger.info(`Batch completado: ${successCount} exitosas, ${failCount} fallidas`);
+    logger.info(
+      `Batch completado: ${successCount} exitosas, ${failCount} fallidas`
+    );
     logger.info(`======================================`);
   } catch (error) {
     logger.error('El pipeline fallo:', error.message);
@@ -235,18 +159,6 @@ async function publishProductItem(product, config) {
   logger.info(`Producto publicado! Media ID: ${result.id}`);
 
   await cleanupUploadedImage(publicUrl);
-}
-
-async function publishReelItem(reel, config) {
-  logger.info(
-    `Reel: ${reel.shortcode}${reel.mandatory ? ' (OBLIGATORIO)' : ''} - mediaId: ${reel.mediaId}`
-  );
-
-  const { mediaUrl } = await getFreshMediaUrl(reel.mediaId, config);
-  logger.info(`Media URL obtenida`);
-
-  const result = await publishVideoStory(mediaUrl, config);
-  logger.info(`Reel republicado! Media ID: ${result.id}`);
 }
 
 main();

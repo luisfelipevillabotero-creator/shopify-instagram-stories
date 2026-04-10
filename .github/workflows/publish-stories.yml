@@ -7,6 +7,11 @@ on:
     # 7:00 PM hora Colombia (UTC-5) = 00:00 UTC (dia siguiente)
     - cron: '0 0 * * *'
   workflow_dispatch: # Permite ejecucion manual para pruebas
+    inputs:
+      count:
+        description: 'Numero de publicaciones (0 = automatico por turno)'
+        required: false
+        default: '0'
 
 permissions:
   contents: write
@@ -49,6 +54,7 @@ jobs:
           INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
           INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLISH_COUNT: ${{ inputs.count || '0' }}
         run: node src/index.js
 
       - name: Commit historial actualizado

@@ -10,24 +10,22 @@
 
 ## Contenido y Frecuencia (Batch por turno)
 
-4. **Turno MAÑANA (8:00 AM)**: 9 publicaciones total
-   - 5 imágenes de producto
-   - 4 reels (1 obligatorio + 3 aleatorios)
-5. **Turno NOCHE (7:00 PM)**: 7 publicaciones total
-   - 4 imágenes de producto
-   - 3 reels (todos aleatorios)
-6. **Orden dentro del batch**: Completamente aleatorio (productos y reels mezclados)
+4. **Turno MAÑANA (8:00 AM)**: 9 publicaciones de producto
+5. **Turno NOCHE (7:00 PM)**: 7 publicaciones de producto
+6. **Orden dentro del batch**: Aleatorio
 7. **Delay entre publicaciones**: 5 segundos
 8. **Total diario**: 16 publicaciones (9 + 7)
 
-## Reels
+## Reels (SUSPENDIDO)
 
-9. **Reel obligatorio**: `DWO2PVCisA7` (solo en el turno de la mañana)
-10. **Pool de reels aleatorios**: 28 shortcodes definidos en `data/reels-config.json`
-11. **No repetición intra-día**: Un reel publicado en la mañana no se repite en la noche
-12. **Mapping shortcode → media_id**: Automático vía paginación de `/media`, cacheado en `data/reels-map.json`
-13. **Manejo de fallos**: Si un reel aleatorio falla, se intenta otro reel aleatorio del pool no usado
-14. **Republicación**: Se obtiene `media_url` fresco y se publica como Video Story
+9. **Estado**: Los reels están **suspendidos** en la automatización
+10. **Motivo**: La Graph API de Instagram no permite republicar reels como Stories con el sticker "Ver reel". El endpoint `POST /media` con `video_url` rechaza los `media_url` devueltos por la propia Graph API (error `container ERROR`).
+11. **Alternativa mientras tanto**: Compartir los reels manualmente desde la app mobile con el botón "Agregar a historia"
+12. **Archivos conservados para reactivar en el futuro**:
+    - `data/reels-config.json` (pool de shortcodes)
+    - `data/reels-map.json` (cache shortcode → media_id)
+    - `src/instagram/reels.js` (helpers)
+    - `publishVideoStory()` en `src/instagram/publisher.js`
 
 ## Productos (Stories)
 

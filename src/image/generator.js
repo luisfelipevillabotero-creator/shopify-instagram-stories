@@ -29,11 +29,11 @@ export async function generateStoryImage(product) {
   ctx.fillStyle = template.backgroundColor;
   ctx.fillRect(0, 0, STORY_WIDTH, STORY_HEIGHT);
 
-  // Capa 2: Imagen del producto (84% superior)
+  // Capa 2: Imagen del producto (90% superior)
   if (product.imageUrl) {
     try {
       const productImg = await loadImage(product.imageUrl);
-      const targetHeight = STORY_HEIGHT * 0.84;
+      const targetHeight = STORY_HEIGHT * 0.90;
       const targetWidth = STORY_WIDTH;
       const imgAspect = productImg.width / productImg.height;
       const targetAspect = targetWidth / targetHeight;
@@ -98,10 +98,10 @@ export async function generateStoryImage(product) {
     }
   }
 
-  // Capa 4: Titulo del producto (zona inferior 16%)
-  const textStartY = STORY_HEIGHT * 0.855;
+  // Capa 4: Titulo del producto (zona inferior 10%)
+  const textStartY = STORY_HEIGHT * 0.913;
   ctx.fillStyle = template.textColor;
-  ctx.font = 'bold 40px Montserrat';
+  ctx.font = 'bold 26px Montserrat';
   ctx.textAlign = 'center';
   wrapText(
     ctx,
@@ -109,46 +109,46 @@ export async function generateStoryImage(product) {
     STORY_WIDTH / 2,
     textStartY,
     STORY_WIDTH - 120,
-    46
+    30
   );
 
   // Capa 5: Precio
-  const priceY = textStartY + 100;
+  const priceY = textStartY + 58;
 
   if (product.discount) {
     // Precio original tachado (arriba, centrado, pequeño)
     ctx.fillStyle = '#888888';
-    ctx.font = 'normal 24px Montserrat';
+    ctx.font = 'normal 14px Montserrat';
     const originalPriceText = formatPrice(
       product.compareAtPrice,
       product.currency
     );
     const originalWidth = ctx.measureText(originalPriceText).width;
-    const originalY = priceY - 34;
+    const originalY = priceY - 20;
     ctx.fillText(originalPriceText, STORY_WIDTH / 2, originalY);
 
     // Linea de tachado
     ctx.strokeStyle = '#888888';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(STORY_WIDTH / 2 - originalWidth / 2, originalY - 7);
-    ctx.lineTo(STORY_WIDTH / 2 + originalWidth / 2, originalY - 7);
+    ctx.moveTo(STORY_WIDTH / 2 - originalWidth / 2, originalY - 4);
+    ctx.lineTo(STORY_WIDTH / 2 + originalWidth / 2, originalY - 4);
     ctx.stroke();
 
     // Precio con descuento (abajo, grande, centrado)
     ctx.fillStyle = template.priceColor;
-    ctx.font = 'bold 44px Montserrat';
+    ctx.font = 'bold 30px Montserrat';
     const finalPriceText = formatPrice(product.price, product.currency);
     const finalWidth = ctx.measureText(finalPriceText).width;
-    ctx.fillText(finalPriceText, STORY_WIDTH / 2, priceY + 12);
+    ctx.fillText(finalPriceText, STORY_WIDTH / 2, priceY + 10);
 
     // Badge de descuento al lado derecho del precio
-    const badgeX = STORY_WIDTH / 2 + finalWidth / 2 + 50;
+    const badgeX = STORY_WIDTH / 2 + finalWidth / 2 + 32;
     const badgeY = priceY;
     drawDiscountBadge(ctx, product.discount, badgeX, badgeY);
   } else {
     ctx.fillStyle = template.textColor;
-    ctx.font = 'bold 44px Montserrat';
+    ctx.font = 'bold 30px Montserrat';
     ctx.fillText(
       formatPrice(product.price, product.currency),
       STORY_WIDTH / 2,
@@ -157,19 +157,19 @@ export async function generateStoryImage(product) {
   }
 
   // Capa 6: Boton CTA
-  const ctaY = STORY_HEIGHT - 130;
-  drawRoundedRect(ctx, STORY_WIDTH / 2 - 216, ctaY, 432, 72, 36);
+  const ctaY = STORY_HEIGHT - 72;
+  drawRoundedRect(ctx, STORY_WIDTH / 2 - 140, ctaY, 280, 44, 22);
   ctx.fillStyle = template.ctaColor;
   ctx.fill();
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 30px Montserrat';
+  ctx.font = 'bold 18px Montserrat';
   ctx.textAlign = 'center';
-  ctx.fillText('COMPRAR AHORA', STORY_WIDTH / 2, ctaY + 47);
+  ctx.fillText('COMPRAR AHORA', STORY_WIDTH / 2, ctaY + 29);
 
   // Capa 7: Texto inferior
   ctx.fillStyle = hexToRgba(template.textColor, 0.5);
-  ctx.font = 'normal 22px Montserrat';
-  ctx.fillText('weloveluana.com', STORY_WIDTH / 2, STORY_HEIGHT - 22);
+  ctx.font = 'normal 14px Montserrat';
+  ctx.fillText('weloveluana.com', STORY_WIDTH / 2, STORY_HEIGHT - 10);
 
   // Guardar imagen
   if (!fs.existsSync(OUTPUT_DIR)) {
@@ -214,12 +214,12 @@ function drawDiscountBadge(ctx, discount, x, y) {
   ctx.save();
   ctx.fillStyle = '#FF6B6B';
   ctx.beginPath();
-  ctx.arc(x, y, 50, 0, Math.PI * 2);
+  ctx.arc(x, y, 26, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 28px Montserrat';
+  ctx.font = 'bold 16px Montserrat';
   ctx.textAlign = 'center';
-  ctx.fillText(`-${discount}%`, x, y + 10);
+  ctx.fillText(`-${discount}%`, x, y + 6);
   ctx.restore();
 }
 
