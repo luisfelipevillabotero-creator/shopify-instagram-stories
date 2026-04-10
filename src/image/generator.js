@@ -29,11 +29,11 @@ export async function generateStoryImage(product) {
   ctx.fillStyle = template.backgroundColor;
   ctx.fillRect(0, 0, STORY_WIDTH, STORY_HEIGHT);
 
-  // Capa 2: Imagen del producto (80% superior)
+  // Capa 2: Imagen del producto (84% superior)
   if (product.imageUrl) {
     try {
       const productImg = await loadImage(product.imageUrl);
-      const targetHeight = STORY_HEIGHT * 0.8;
+      const targetHeight = STORY_HEIGHT * 0.84;
       const targetWidth = STORY_WIDTH;
       const imgAspect = productImg.width / productImg.height;
       const targetAspect = targetWidth / targetHeight;
@@ -98,10 +98,10 @@ export async function generateStoryImage(product) {
     }
   }
 
-  // Capa 4: Titulo del producto (zona inferior 20%)
-  const textStartY = STORY_HEIGHT * 0.82;
+  // Capa 4: Titulo del producto (zona inferior 16%)
+  const textStartY = STORY_HEIGHT * 0.855;
   ctx.fillStyle = template.textColor;
-  ctx.font = 'bold 44px Montserrat';
+  ctx.font = 'bold 40px Montserrat';
   ctx.textAlign = 'center';
   wrapText(
     ctx,
@@ -109,46 +109,46 @@ export async function generateStoryImage(product) {
     STORY_WIDTH / 2,
     textStartY,
     STORY_WIDTH - 120,
-    52
+    46
   );
 
   // Capa 5: Precio
-  const priceY = textStartY + 120;
+  const priceY = textStartY + 100;
 
   if (product.discount) {
     // Precio original tachado (arriba, centrado, pequeño)
     ctx.fillStyle = '#888888';
-    ctx.font = 'normal 28px Montserrat';
+    ctx.font = 'normal 24px Montserrat';
     const originalPriceText = formatPrice(
       product.compareAtPrice,
       product.currency
     );
     const originalWidth = ctx.measureText(originalPriceText).width;
-    const originalY = priceY - 40;
+    const originalY = priceY - 34;
     ctx.fillText(originalPriceText, STORY_WIDTH / 2, originalY);
 
     // Linea de tachado
     ctx.strokeStyle = '#888888';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(STORY_WIDTH / 2 - originalWidth / 2, originalY - 8);
-    ctx.lineTo(STORY_WIDTH / 2 + originalWidth / 2, originalY - 8);
+    ctx.moveTo(STORY_WIDTH / 2 - originalWidth / 2, originalY - 7);
+    ctx.lineTo(STORY_WIDTH / 2 + originalWidth / 2, originalY - 7);
     ctx.stroke();
 
     // Precio con descuento (abajo, grande, centrado)
     ctx.fillStyle = template.priceColor;
-    ctx.font = 'bold 50px Montserrat';
+    ctx.font = 'bold 44px Montserrat';
     const finalPriceText = formatPrice(product.price, product.currency);
     const finalWidth = ctx.measureText(finalPriceText).width;
-    ctx.fillText(finalPriceText, STORY_WIDTH / 2, priceY + 15);
+    ctx.fillText(finalPriceText, STORY_WIDTH / 2, priceY + 12);
 
     // Badge de descuento al lado derecho del precio
-    const badgeX = STORY_WIDTH / 2 + finalWidth / 2 + 55;
+    const badgeX = STORY_WIDTH / 2 + finalWidth / 2 + 50;
     const badgeY = priceY;
     drawDiscountBadge(ctx, product.discount, badgeX, badgeY);
   } else {
     ctx.fillStyle = template.textColor;
-    ctx.font = 'bold 50px Montserrat';
+    ctx.font = 'bold 44px Montserrat';
     ctx.fillText(
       formatPrice(product.price, product.currency),
       STORY_WIDTH / 2,
@@ -156,20 +156,20 @@ export async function generateStoryImage(product) {
     );
   }
 
-  // Capa 6: Boton CTA (+20% más grande)
-  const ctaY = STORY_HEIGHT - 160;
-  drawRoundedRect(ctx, STORY_WIDTH / 2 - 216, ctaY, 432, 78, 39);
+  // Capa 6: Boton CTA
+  const ctaY = STORY_HEIGHT - 130;
+  drawRoundedRect(ctx, STORY_WIDTH / 2 - 216, ctaY, 432, 72, 36);
   ctx.fillStyle = template.ctaColor;
   ctx.fill();
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 34px Montserrat';
+  ctx.font = 'bold 30px Montserrat';
   ctx.textAlign = 'center';
-  ctx.fillText('COMPRAR AHORA', STORY_WIDTH / 2, ctaY + 52);
+  ctx.fillText('COMPRAR AHORA', STORY_WIDTH / 2, ctaY + 47);
 
-  // Capa 7: Texto inferior (+20% más grande)
+  // Capa 7: Texto inferior
   ctx.fillStyle = hexToRgba(template.textColor, 0.5);
-  ctx.font = 'normal 26px Montserrat';
-  ctx.fillText('weloveluana.com', STORY_WIDTH / 2, STORY_HEIGHT - 45);
+  ctx.font = 'normal 22px Montserrat';
+  ctx.fillText('weloveluana.com', STORY_WIDTH / 2, STORY_HEIGHT - 22);
 
   // Guardar imagen
   if (!fs.existsSync(OUTPUT_DIR)) {
