@@ -10,6 +10,7 @@ import {
   cleanupUploadedImage,
 } from './image/uploader.js';
 import { publishStory } from './instagram/publisher.js';
+import { detectFaces } from './image/face-detector.js';
 import { logger } from './utils/logger.js';
 import { loadConfig } from './utils/config.js';
 
@@ -125,7 +126,7 @@ async function prepareProducts(config, needed) {
   return shuffled.slice(0, needed);
 }
 
-function pickRandomColorImage(product) {
+async function pickRandomColorImage(product) {
   const groups = product.colorImages || [];
   if (groups.length === 0) {
     return { imageUrl: product.imageUrl, color: null };
@@ -135,14 +136,31 @@ function pickRandomColorImage(product) {
   if (urls.length === 0) {
     return { imageUrl: product.imageUrl, color: group.color };
   }
+
+  // Prefer images with a face (model wearing the product)
+  const shuffledUrls = shuffle(urls);
+  for (const url of shuffledUrls) {
+    try {
+      const faces = await detectFaces(url);
+      if (faces > 0) {
+        logger.info(`Imagen con modelo seleccionada (${faces} rostro(s))`);
+        return { imageUrl: url, color: group.color };
+      }
+    } catch {
+      // Skip this image on error
+    }
+  }
+
+  // Fallback: use any random image if none has a face
+  logger.info('No se encontro imagen con modelo, usando imagen aleatoria');
   return {
-    imageUrl: urls[Math.floor(Math.random() * urls.length)],
+    imageUrl: shuffledUrls[0],
     color: group.color,
   };
 }
 
 async function publishProductItem(product, config) {
-  const { imageUrl, color } = pickRandomColorImage(product);
+  const { imageUrl, color } = await pickRandomColorImage(product);
   logger.info(
     `Producto: ${product.title}${color ? ` - Color: ${color}` : ''}`
   );
