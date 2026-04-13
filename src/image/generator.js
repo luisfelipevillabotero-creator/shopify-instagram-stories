@@ -25,8 +25,8 @@ export async function generateStoryImage(product) {
   const canvas = createCanvas(STORY_WIDTH, STORY_HEIGHT);
   const ctx = canvas.getContext('2d');
 
-  // Capa 1: Fondo
-  ctx.fillStyle = template.backgroundColor;
+  // Capa 1: Fondo blanco
+  ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(0, 0, STORY_WIDTH, STORY_HEIGHT);
 
   // Capa 2: Imagen del producto (90% superior)
@@ -63,17 +63,14 @@ export async function generateStoryImage(product) {
         targetHeight
       );
 
-      // Gradiente para fundir imagen con fondo
-      const gradient = ctx.createLinearGradient(
-        0,
-        targetHeight * 0.65,
-        0,
-        targetHeight
-      );
-      gradient.addColorStop(0, hexToRgba(template.backgroundColor, 0));
-      gradient.addColorStop(1, hexToRgba(template.backgroundColor, 1));
+      // Gradiente blanco (20% de la pieza total = 384px)
+      const gradientEnd = targetHeight;
+      const gradientStart = gradientEnd - STORY_HEIGHT * 0.20;
+      const gradient = ctx.createLinearGradient(0, gradientStart, 0, gradientEnd);
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
+      gradient.addColorStop(1, 'rgba(255, 255, 255, 1)');
       ctx.fillStyle = gradient;
-      ctx.fillRect(0, targetHeight * 0.65, STORY_WIDTH, targetHeight * 0.35);
+      ctx.fillRect(0, gradientStart, STORY_WIDTH, gradientEnd - gradientStart);
     } catch {
       // Si falla la carga de imagen, continuar con el fondo solido
     }
@@ -98,10 +95,10 @@ export async function generateStoryImage(product) {
     }
   }
 
-  // Capa 4: Titulo del producto (zona inferior 10%)
-  const textStartY = STORY_HEIGHT * 0.913;
-  ctx.fillStyle = template.textColor;
-  ctx.font = 'bold 26px Montserrat';
+  // Capa 4: Titulo del producto (texto negro, +40%)
+  const textStartY = STORY_HEIGHT * 0.89;
+  ctx.fillStyle = '#000000';
+  ctx.font = 'bold 36px Montserrat';
   ctx.textAlign = 'center';
   wrapText(
     ctx,
@@ -109,46 +106,46 @@ export async function generateStoryImage(product) {
     STORY_WIDTH / 2,
     textStartY,
     STORY_WIDTH - 120,
-    30
+    42
   );
 
   // Capa 5: Precio
-  const priceY = textStartY + 58;
+  const priceY = textStartY + 80;
 
   if (product.discount) {
-    // Precio original tachado (arriba, centrado, pequeño)
-    ctx.fillStyle = '#888888';
-    ctx.font = 'normal 14px Montserrat';
+    // Precio original tachado (arriba, centrado)
+    ctx.fillStyle = '#000000';
+    ctx.font = 'normal 20px Montserrat';
     const originalPriceText = formatPrice(
       product.compareAtPrice,
       product.currency
     );
     const originalWidth = ctx.measureText(originalPriceText).width;
-    const originalY = priceY - 20;
+    const originalY = priceY - 28;
     ctx.fillText(originalPriceText, STORY_WIDTH / 2, originalY);
 
     // Linea de tachado
-    ctx.strokeStyle = '#888888';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(STORY_WIDTH / 2 - originalWidth / 2, originalY - 4);
-    ctx.lineTo(STORY_WIDTH / 2 + originalWidth / 2, originalY - 4);
+    ctx.moveTo(STORY_WIDTH / 2 - originalWidth / 2, originalY - 6);
+    ctx.lineTo(STORY_WIDTH / 2 + originalWidth / 2, originalY - 6);
     ctx.stroke();
 
     // Precio con descuento (abajo, grande, centrado)
-    ctx.fillStyle = template.priceColor;
-    ctx.font = 'bold 30px Montserrat';
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 42px Montserrat';
     const finalPriceText = formatPrice(product.price, product.currency);
     const finalWidth = ctx.measureText(finalPriceText).width;
-    ctx.fillText(finalPriceText, STORY_WIDTH / 2, priceY + 10);
+    ctx.fillText(finalPriceText, STORY_WIDTH / 2, priceY + 14);
 
     // Badge de descuento al lado derecho del precio
-    const badgeX = STORY_WIDTH / 2 + finalWidth / 2 + 32;
+    const badgeX = STORY_WIDTH / 2 + finalWidth / 2 + 45;
     const badgeY = priceY;
     drawDiscountBadge(ctx, product.discount, badgeX, badgeY);
   } else {
-    ctx.fillStyle = template.textColor;
-    ctx.font = 'bold 30px Montserrat';
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 42px Montserrat';
     ctx.fillText(
       formatPrice(product.price, product.currency),
       STORY_WIDTH / 2,
@@ -157,19 +154,19 @@ export async function generateStoryImage(product) {
   }
 
   // Capa 6: Boton CTA
-  const ctaY = STORY_HEIGHT - 72;
-  drawRoundedRect(ctx, STORY_WIDTH / 2 - 140, ctaY, 280, 44, 22);
-  ctx.fillStyle = template.ctaColor;
+  const ctaY = STORY_HEIGHT - 90;
+  drawRoundedRect(ctx, STORY_WIDTH / 2 - 160, ctaY, 320, 56, 28);
+  ctx.fillStyle = '#000000';
   ctx.fill();
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 18px Montserrat';
+  ctx.font = 'bold 25px Montserrat';
   ctx.textAlign = 'center';
-  ctx.fillText('COMPRAR AHORA', STORY_WIDTH / 2, ctaY + 29);
+  ctx.fillText('COMPRAR AHORA', STORY_WIDTH / 2, ctaY + 37);
 
   // Capa 7: Texto inferior
-  ctx.fillStyle = hexToRgba(template.textColor, 0.5);
-  ctx.font = 'normal 14px Montserrat';
-  ctx.fillText('weloveluana.com', STORY_WIDTH / 2, STORY_HEIGHT - 10);
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+  ctx.font = 'normal 20px Montserrat';
+  ctx.fillText('weloveluana.com', STORY_WIDTH / 2, STORY_HEIGHT - 18);
 
   // Guardar imagen
   if (!fs.existsSync(OUTPUT_DIR)) {
@@ -214,12 +211,12 @@ function drawDiscountBadge(ctx, discount, x, y) {
   ctx.save();
   ctx.fillStyle = '#FF6B6B';
   ctx.beginPath();
-  ctx.arc(x, y, 26, 0, Math.PI * 2);
+  ctx.arc(x, y, 36, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 16px Montserrat';
+  ctx.font = 'bold 22px Montserrat';
   ctx.textAlign = 'center';
-  ctx.fillText(`-${discount}%`, x, y + 6);
+  ctx.fillText(`-${discount}%`, x, y + 8);
   ctx.restore();
 }
 
