@@ -88,43 +88,32 @@ async function main() {
       `Productos seleccionados: ${products.map((p) => p.title).join(', ')}`
     );
 
-    // Preparar videos
-    const videos = prepareVideos(slot, numVideos);
-    logger.info(`Videos seleccionados: ${videos.length} reels`);
+    // Preparar videos (con candidatos extra por si algunos son muy grandes)
+    const videoPool = prepareVideos(slot, numVideos);
+    logger.info(`Videos: ${numVideos} necesarios, ${videoPool.candidates.length} candidatos`);
 
-    // Crear batch mezclado: items de producto e items de video
+    // Crear batch mezclado
     const productItems = products.map((p) => ({ type: 'product', data: p }));
-    const videoItems = videos.map((v) => ({ type: 'video', data: v }));
-    const batch = shuffle([...productItems, ...videoItems]);
+    const videoPlaceholders = Array.from({ length: numVideos }, () => ({
+      type: 'video',
+      data: null,
+    }));
+    const batch = shuffle([...productItems, ...videoPlaceholders]);
 
-    // Si hay un video obligatorio, asegurarse de que esté en el batch
+    // Si hay un video obligatorio, insertar en el batch de mañana
     const reelsConfig = loadReelsConfig();
     if (slot === 'morning' && reelsConfig.mandatory.length > 0) {
       const mandatoryId =
         reelsConfig.mandatory[
           Math.floor(Math.random() * reelsConfig.mandatory.length)
         ];
-      const hasMandatory = batch.some(
-        (item) => item.type === 'video' && item.data.fileId === mandatoryId
-      );
-      if (!hasMandatory && batch.length > 0) {
-        // Reemplazar el primer video del batch, o agregar si no hay videos
-        const videoIdx = batch.findIndex((item) => item.type === 'video');
-        const mandatoryItem = {
-          type: 'video',
-          data: { fileId: mandatoryId, mandatory: true },
-        };
-        if (videoIdx >= 0) {
-          batch[videoIdx] = mandatoryItem;
-        } else {
-          batch[0] = mandatoryItem;
-        }
-      }
+      videoPool.candidates.unshift(mandatoryId);
     }
 
     // Publicar en secuencia
     let successCount = 0;
     let failCount = 0;
+    let videoCandidateIdx = 0;
 
     for (let i = 0; i < batch.length; i++) {
       const item = batch[i];
@@ -134,10 +123,27 @@ async function main() {
         if (item.type === 'product') {
           await publishProductItem(item.data, config);
           recordPostedProduct(item.data);
+          successCount++;
         } else {
-          await publishVideoItem(item.data, config);
+          // Try video candidates until one works
+          let videoPublished = false;
+          while (videoCandidateIdx < videoPool.candidates.length) {
+            const fileId = videoPool.candidates[videoCandidateIdx];
+            videoCandidateIdx++;
+            try {
+              await publishVideoItem({ fileId }, config);
+              videoPublished = true;
+              successCount++;
+              break;
+            } catch (videoError) {
+              logger.warn(`Video ${fileId} fallo: ${videoError.message}, intentando siguiente...`);
+            }
+          }
+          if (!videoPublished) {
+            logger.error('No se pudo publicar ningun video del pool');
+            failCount++;
+          }
         }
-        successCount++;
       } catch (error) {
         logger.error(`Error publicando ${i + 1}: ${error.message}`);
         failCount++;
@@ -187,9 +193,10 @@ async function prepareProducts(config, needed) {
 function prepareVideos(slot, needed) {
   if (needed <= 0) return [];
   const reelsConfig = loadReelsConfig();
-  const allIds = [...reelsConfig.pool];
-  const shuffled = shuffle(allIds);
-  return shuffled.slice(0, needed).map((fileId) => ({ fileId }));
+  const allIds = shuffle([...reelsConfig.pool]);
+  // Provide extra candidates in case some are too large
+  const candidates = allIds.slice(0, needed * 3);
+  return { needed, candidates };
 }
 
 async function pickRandomColorImage(product) {
