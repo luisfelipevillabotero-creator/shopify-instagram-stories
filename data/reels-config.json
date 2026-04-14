@@ -1,7 +1,10 @@
 {
-  "mandatory": [],
-  "pool": [
+  "mandatory": [
     "13Fe02O86wn1g1CmP8xG-OGntvlCGdAIw",
+    "1AXSghdvTR-a_mjQVbEZQzdi-AFwMEJAs",
+    "1gdxfMTQ24pBDVS-W49tMvljnrRN7C_9M"
+  ],
+  "pool": [
     "1-9fOXtXlga9Mq7lIQfo7A4R8xpsBnjez",
     "1PO_UcSFSZ4BZ-a8Gbg0ETmK-swwLuoUz",
     "1GMxVz-VSjPBf2tddBZ3-4-3cDjx5dggI",
