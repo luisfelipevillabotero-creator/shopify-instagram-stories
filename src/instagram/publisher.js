@@ -107,7 +107,7 @@ async function waitForContainerReady(containerId, config, maxAttempts = 30) {
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const response = await fetch(
-      `${url}?fields=status_code&access_token=${config.instagramAccessToken}`
+      `${url}?fields=status_code,status&access_token=${config.instagramAccessToken}`
     );
     const data = await response.json();
     const status = data.status_code;
@@ -119,8 +119,9 @@ async function waitForContainerReady(containerId, config, maxAttempts = 30) {
     }
 
     if (status === 'ERROR') {
+      logger.error(`Detalle del error: ${JSON.stringify(data)}`);
       throw new Error(
-        'El container de Instagram fallo con status ERROR'
+        `El container de Instagram fallo: ${data.status || 'ERROR'}`
       );
     }
 

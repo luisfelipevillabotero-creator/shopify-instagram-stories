@@ -10,6 +10,7 @@ import {
 import { generateStoryImage } from './image/generator.js';
 import {
   uploadImageForInstagram,
+  uploadVideoForInstagram,
   cleanupUploadedImage,
 } from './image/uploader.js';
 import { publishStory, publishVideoStory } from './instagram/publisher.js';
@@ -245,14 +246,48 @@ async function publishProductItem(product, config) {
 }
 
 async function publishVideoItem(video, config) {
-  const videoUrl = getGdriveVideoUrl(video.fileId);
   logger.info(
     `Video reel: ${video.fileId}${video.mandatory ? ' (OBLIGATORIO)' : ''}`
   );
-  logger.info(`URL Google Drive: ${videoUrl}`);
 
-  const result = await publishVideoStory(videoUrl, config);
+  // Download from Google Drive
+  const gdriveUrl = getGdriveVideoUrl(video.fileId);
+  logger.info(`Descargando video de Google Drive...`);
+  const response = await fetch(gdriveUrl);
+  if (!response.ok) {
+    throw new Error(`Error descargando video: ${response.status}`);
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  const ext = contentType.includes('quicktime') ? '.mov' : '.mp4';
+  const outputDir = path.resolve(__dirname, '../output');
+  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+  const localPath = path.join(outputDir, `reel-${Date.now()}${ext}`);
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const sizeMB = (buffer.length / 1024 / 1024).toFixed(1);
+
+  // Skip videos larger than 50MB (GitHub API limit for base64 upload)
+  if (buffer.length > 50 * 1024 * 1024) {
+    throw new Error(`Video demasiado grande (${sizeMB}MB), maximo 50MB`);
+  }
+
+  fs.writeFileSync(localPath, buffer);
+  logger.info(`Video descargado: ${localPath} (${sizeMB}MB)`);
+
+  // Upload to GitHub for public URL
+  const publicUrl = await uploadVideoForInstagram(localPath);
+  logger.info(`Video subido a: ${publicUrl}`);
+
+  // Cleanup local file
+  fs.unlinkSync(localPath);
+
+  // Publish as video story
+  const result = await publishVideoStory(publicUrl, config);
   logger.info(`Video story publicada! Media ID: ${result.id}`);
+
+  // Cleanup GitHub
+  await cleanupUploadedImage(publicUrl);
 }
 
 main();
