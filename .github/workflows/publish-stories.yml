@@ -2,10 +2,10 @@ name: Publicar Instagram Stories
 
 on:
   schedule:
-    # 8:00 AM hora Colombia (UTC-5) = 13:00 UTC
-    - cron: '0 13 * * *'
-    # 7:00 PM hora Colombia (UTC-5) = 00:00 UTC (dia siguiente)
-    - cron: '0 0 * * *'
+    # 6:00 AM hora Colombia (UTC-5) = 11:00 UTC (+~2h delay GH Actions = ~8AM COT)
+    - cron: '0 11 * * *'
+    # 5:00 PM hora Colombia (UTC-5) = 22:00 UTC (+~2h delay GH Actions = ~7PM COT)
+    - cron: '0 22 * * *'
   workflow_dispatch: # Permite ejecucion manual para pruebas
     inputs:
       count:
