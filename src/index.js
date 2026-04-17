@@ -103,11 +103,11 @@ async function main() {
     // Si hay un video obligatorio, insertar en el batch de mañana
     const reelsConfig = loadReelsConfig();
     if (slot === 'morning' && reelsConfig.mandatory.length > 0) {
-      const mandatoryId =
+      const mandatoryPath =
         reelsConfig.mandatory[
           Math.floor(Math.random() * reelsConfig.mandatory.length)
         ];
-      videoPool.candidates.unshift(mandatoryId);
+      videoPool.candidates.unshift({ type: 'mandatory', path: mandatoryPath });
     }
 
     // Publicar en secuencia
@@ -128,15 +128,20 @@ async function main() {
           // Try video candidates until one works
           let videoPublished = false;
           while (videoCandidateIdx < videoPool.candidates.length) {
-            const fileId = videoPool.candidates[videoCandidateIdx];
+            const candidate = videoPool.candidates[videoCandidateIdx];
             videoCandidateIdx++;
             try {
-              await publishVideoItem({ fileId }, config);
+              if (candidate.type === 'mandatory') {
+                await publishMandatoryVideoItem(candidate.path, config);
+              } else {
+                await publishVideoItem({ fileId: candidate.fileId }, config);
+              }
               videoPublished = true;
               successCount++;
               break;
             } catch (videoError) {
-              logger.warn(`Video ${fileId} fallo: ${videoError.message}, intentando siguiente...`);
+              const label = candidate.type === 'mandatory' ? candidate.path : candidate.fileId;
+              logger.warn(`Video ${label} fallo: ${videoError.message}, intentando siguiente...`);
             }
           }
           if (!videoPublished) {
@@ -191,11 +196,11 @@ async function prepareProducts(config, needed) {
 }
 
 function prepareVideos(slot, needed) {
-  if (needed <= 0) return [];
+  if (needed <= 0) return { needed: 0, candidates: [] };
   const reelsConfig = loadReelsConfig();
   const allIds = shuffle([...reelsConfig.pool]);
   // Provide extra candidates in case some are too large
-  const candidates = allIds.slice(0, needed * 3);
+  const candidates = allIds.slice(0, needed * 3).map((id) => ({ type: 'pool', fileId: id }));
   return { needed, candidates };
 }
 
@@ -252,10 +257,21 @@ async function publishProductItem(product, config) {
   await cleanupUploadedImage(publicUrl);
 }
 
+const REPO_RAW_BASE = 'https://raw.githubusercontent.com/luisfelipevillabotero-creator/shopify-instagram-stories/main';
+
+async function publishMandatoryVideoItem(videoPath, config) {
+  const fileName = path.basename(videoPath);
+  logger.info(`Video reel: ${fileName} (OBLIGATORIO)`);
+
+  const publicUrl = `${REPO_RAW_BASE}/${videoPath}`;
+  logger.info(`URL directa del repo: ${publicUrl}`);
+
+  const result = await publishVideoStory(publicUrl, config);
+  logger.info(`Video story publicada! Media ID: ${result.id}`);
+}
+
 async function publishVideoItem(video, config) {
-  logger.info(
-    `Video reel: ${video.fileId}${video.mandatory ? ' (OBLIGATORIO)' : ''}`
-  );
+  logger.info(`Video reel: ${video.fileId}`);
 
   // Download from Google Drive
   const gdriveUrl = getGdriveVideoUrl(video.fileId);
@@ -274,9 +290,9 @@ async function publishVideoItem(video, config) {
   const buffer = Buffer.from(await response.arrayBuffer());
   const sizeMB = (buffer.length / 1024 / 1024).toFixed(1);
 
-  // Skip videos larger than 50MB (GitHub API limit for base64 upload)
-  if (buffer.length > 50 * 1024 * 1024) {
-    throw new Error(`Video demasiado grande (${sizeMB}MB), maximo 50MB`);
+  // Skip videos larger than 25MB (GitHub Contents API base64 limit ~33MB)
+  if (buffer.length > 25 * 1024 * 1024) {
+    throw new Error(`Video demasiado grande (${sizeMB}MB), maximo 25MB`);
   }
 
   fs.writeFileSync(localPath, buffer);
