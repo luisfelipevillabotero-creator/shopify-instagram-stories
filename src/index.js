@@ -75,7 +75,7 @@ async function main() {
       overrideCount > 0 ? overrideCount : slot === 'morning' ? 9 : 7;
 
     // Dividir entre productos y videos (~50/50)
-    const numVideos = Math.floor(totalItems / 2);
+    const numVideos = Math.ceil(totalItems / 2);
     const numProducts = totalItems - numVideos;
 
     logger.info(

@@ -12,6 +12,10 @@ on:
         description: 'Numero de publicaciones (0 = automatico por turno)'
         required: false
         default: '0'
+      slot:
+        description: 'Forzar turno (morning/evening, vacio = auto)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -55,6 +59,7 @@ jobs:
           INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLISH_COUNT: ${{ inputs.count || '0' }}
+          SLOT: ${{ inputs.slot || '' }}
         run: node src/index.js
 
       - name: Commit historial actualizado
